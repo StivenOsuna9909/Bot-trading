@@ -53,19 +53,23 @@ function _logProfits(price) {
 
     const m1Balance =  parseFloat(store.get(`${MARKET1.toLowerCase()}_balance`))
     const m2Balance = parseFloat(store.get(`${MARKET2.toLowerCase()}_balance`))
+    let result = m1Balance * price + m2Balance
 
     const initialBalance = parseFloat(store.get(`initial_${MARKET2.toLowerCase()}_balance`))
     logColor(colors.gray,
-        `Balance: ${m1Balance} ${MARKET1}, ${m2Balance.toFixed(2)} ${MARKET2}, Current: ${parseFloat( m1Balance * price + m2Balance)} ${MARKET2}, Initial: ${initialBalance.toFixed(2)} ${MARKET2}`)
+        `Balance: ${m1Balance} ${MARKET1}, ${m2Balance.toFixed(2)} ${MARKET2}, Current: ${parseFloat( result.toString())} ${MARKET2}, Initial: ${initialBalance.toFixed(2)} ${MARKET2}`)
 }
 
 async function _buy(price, amount) {
-    if (parseFloat(store.get(`${MARKET2.toLowerCase()}_balance`)) >= BUY_ORDER_AMOUNT * price) {
+    let condition = Number(BUY_ORDER_AMOUNT)  * price
+    let buy = Number( BUY_ORDER_AMOUNT) * price
+    if (parseFloat(store.get(`${MARKET2.toLowerCase()}_balance`)) >= condition) {
         var orders = store.get('orders')
-        var factor = process.env.PRICE_PERCENT * price / 100
+        var factor = Number(process.env.PRICE_PERCENT)  * price / 100
 
         const order = {
             buy_price: price,
+            id: null,
             amount,
             sell_price: price + factor,
             sold_price: 0,
@@ -76,7 +80,7 @@ async function _buy(price, amount) {
         log(`
             Buying ${MARKET1}
             ==================
-            amountIn: ${parseFloat(BUY_ORDER_AMOUNT * price).toFixed(2)} ${MARKET2}
+            amountIn: ${parseFloat( buy.toString()).toFixed(2)} ${MARKET2}
             amountOut: ${BUY_ORDER_AMOUNT} ${MARKET1}
         `)
 
@@ -91,12 +95,12 @@ async function _buy(price, amount) {
             await _updateBalances()
 
             logColor(colors.green, '=============================')
-            logColor(colors.green, `Bought ${BUY_ORDER_AMOUNT} ${MARKET1} for ${parseFloat(BUY_ORDER_AMOUNT * price).toFixed(2)} ${MARKET2}, Price: ${order.buy_price}\n`)
+            logColor(colors.green, `Bought ${BUY_ORDER_AMOUNT} ${MARKET1} for ${parseFloat(buy.toString()).toFixed(2)} ${MARKET2}, Price: ${order.buy_price}\n`)
             logColor(colors.green, '=============================')
 
             await _calculateProfits()
-        } else _newPriceReset(2, BUY_ORDER_AMOUNT * price, price)
-    } else _newPriceReset(2, BUY_ORDER_AMOUNT * price, price)
+        } else _newPriceReset(2, parseFloat(buy.toString()) , price)
+    } else _newPriceReset(2, parseFloat(buy.toString()), price)
 }
 
 async function _sell(price) {
@@ -186,7 +190,7 @@ async function broadcast() {
                     const factor = (marketPrice - startPrice)
                     const percent = 100 * factor / marketPrice
 
-                    logColor(colors.green, `Gainers: +${parseFloat(percent).toFixed(3)}% ==> +$${parseFloat(factor).toFixed(4)}`)
+                    logColor(colors.green, `Gainers: +${parseFloat( percent).toFixed(3)}% ==> +$${parseFloat(factor).toFixed(4)}`)
                     store.put('percent', `+${parseFloat(percent).toFixed(3)}`)
 
                     await _sell(marketPrice)
